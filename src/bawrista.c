@@ -11,6 +11,10 @@ TextLayer* press_text_layer;
 TextLayer* instr_text_layer;
 Layer* image_layer;
 
+GBitmap* base_white_resource;
+GBitmap* base_black_resource;
+GBitmap* plunger_resource;
+
 AppTimer* timer;
 
 typedef enum { SET_STEEP, SET_PRESS, STEEP, PRESS, DONE } AppState;
@@ -32,11 +36,9 @@ int press_increment;
 #define STEEP_INCREMENT 5
 #define PRESS_INCREMENT 1
 
-// RotBmpPairContainer base_bitmap;
 BitmapLayer* base_bitmap_white;
 BitmapLayer* base_bitmap_black;
-// RotBmpPairContainer plunger_bitmap;
-// BmpContainer base_bitmap;
+
 BitmapLayer* plunger_bitmap;
 PropertyAnimation* prop_animation;
 
@@ -201,7 +203,7 @@ void down_single_click_handler(ClickRecognizerRef recognizer, void* context) {
         ++*var;
         set_interval(STEEP_INTERVAL_TYPE, steep_interval);
         set_interval(PRESS_INTERVAL_TYPE, press_interval);
-        
+
         update();
       }
   }
@@ -319,11 +321,13 @@ void handle_init() {
   
   base_bitmap_white = bitmap_layer_create(BASE_BITMAP_REST_POSITION);
   bitmap_layer_set_compositing_mode(base_bitmap_white, GCompOpOr);
-  bitmap_layer_set_bitmap(base_bitmap_white, gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BASE_WHITE));
+  base_white_resource = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BASE_WHITE);
+  bitmap_layer_set_bitmap(base_bitmap_white, base_white_resource);
 
   base_bitmap_black = bitmap_layer_create(BASE_BITMAP_REST_POSITION);
   bitmap_layer_set_compositing_mode(base_bitmap_black, GCompOpClear);
-  bitmap_layer_set_bitmap(base_bitmap_black, gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BASE_BLACK));  
+  base_black_resource = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_BASE_BLACK);
+  bitmap_layer_set_bitmap(base_bitmap_black, base_black_resource);
 
   plunger_bitmap = bitmap_layer_create(GRECT_OFFSET(layer_get_frame(image_layer), 0, -36));
   bitmap_layer_set_bitmap(plunger_bitmap, gbitmap_create_with_resource(RESOURCE_ID_IMAGE_PLUNGER));
@@ -351,15 +355,21 @@ void handle_init() {
 }
 
 void handle_deinit() {
-  window_destroy(window);
+  text_layer_destroy(steep_text_layer);
+  text_layer_destroy(press_text_layer);
+  text_layer_destroy(instr_text_layer);
 
-  // rotbmp_pair_deinit_container(&plunger_bitmap);
   bitmap_layer_destroy(base_bitmap_white);
   bitmap_layer_destroy(base_bitmap_black);
   bitmap_layer_destroy(plunger_bitmap);
-  //bmp_deinit_container(&base_bitmap);
 
+  layer_destroy(image_layer);
 
+  animation_destroy((Animation*)prop_animation);
+
+  app_timer_cancel(timer);
+
+  window_destroy(window);
 }
 
 int main(void) {
