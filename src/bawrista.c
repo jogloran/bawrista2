@@ -350,8 +350,6 @@ void handle_init() {
 
   plunger_bitmap = bitmap_layer_create(GRECT_OFFSET(layer_get_frame(image_layer), 0, -36));
   bitmap_layer_set_bitmap(plunger_bitmap, gbitmap_create_with_resource(RESOURCE_ID_IMAGE_PLUNGER));
-  // rotbmp_pair_init_container(RESOURCE_ID_IMAGE_BASE_WHITE, 
-  //                            RESOURCE_ID_IMAGE_BASE_BLACK, &base_bitmap);
                      
   layer_add_child(image_layer, bitmap_layer_get_layer(plunger_bitmap));
   layer_add_child(image_layer, bitmap_layer_get_layer(base_bitmap_white));
@@ -392,14 +390,6 @@ void handle_deinit() {
 }
 
 int main(void) {
-  // timer = app_timer_register()
-
-  // PebbleAppHandlers handlers = {
-  //   .init_handler = &handle_init,
-  //   .deinit_handler = &handle_deinit,
-  //   .timer_handler = &handle_timer
-  // };
-  // app_event_loop(params, &handlers);
   handle_init();
   app_event_loop();
   handle_deinit();
