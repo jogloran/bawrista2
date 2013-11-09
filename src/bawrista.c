@@ -17,7 +17,7 @@ GBitmap* plunger_resource;
 
 AppTimer* timer;
 
-typedef enum { SET_STEEP, SET_PRESS, STEEP, PRESS, DONE } AppState;
+typedef enum { SET_STEEP, SET_PRESS, STEEP, WAIT, PRESS, DONE } AppState;
 AppState state;
 
 uint32_t steep_time_key = 0xc4f3c4fe;
@@ -27,14 +27,19 @@ char steep_time_buffer[12 + 5] = "Steep time: 0";
 char press_time_buffer[12 + 5] = "Press time: 0";
 char steep_msg[] = "Set time to Steep";
 char press_msg[] = "Set time to Press";
+char wait_msg[] = "Get ready to Press";
 char enjoy_msg[] = "Enjoy!";
 
-int steep_interval; // interval*15 seconds
-int press_interval; // interval*15 seconds
+int steep_interval;
+int press_interval;
+#define DEFAULT_WAIT_INTERVAL 2
+int wait_interval = DEFAULT_WAIT_INTERVAL;
+
 int steep_increment;
 int press_increment;
 #define STEEP_INCREMENT 5
 #define PRESS_INCREMENT 1
+int wait_increment = 1;
 
 BitmapLayer* base_bitmap_white;
 BitmapLayer* base_bitmap_black;
@@ -137,6 +142,9 @@ void update(void) {
       case STEEP:
         msg = steep_msg + 12;
         break;
+      case WAIT:
+        msg = wait_msg;
+        break;
       case PRESS:
         msg = press_msg + 12;
         break;
@@ -151,7 +159,7 @@ void update(void) {
       text_layer_set_background_color(instr_text_layer, GColorBlack);
       text_layer_set_text_color(instr_text_layer, GColorWhite);
       break;
-      case STEEP: case PRESS: case DONE:
+      case STEEP: case WAIT: case PRESS: case DONE:
       text_layer_set_background_color(instr_text_layer, GColorWhite);
       text_layer_set_text_color(instr_text_layer, GColorBlack);
       break;
@@ -166,6 +174,8 @@ void reset_times_and_update() {
   
   steep_interval = get_interval(STEEP_INTERVAL_TYPE);
   press_interval = get_interval(PRESS_INTERVAL_TYPE);
+  wait_interval = DEFAULT_WAIT_INTERVAL;
+
   update();
 }
 
@@ -215,7 +225,6 @@ void start_aeropress_timer() {
   steep_increment = STEEP_INCREMENT;
   press_increment = PRESS_INCREMENT;
   
-  // app_timer_send_event(app_ctx, steep_increment*1000, TIMER_COOKIE);
   timer = app_timer_register(steep_increment*1000, handle_timer, NULL);
 }
 
@@ -230,7 +239,7 @@ void select_click_handler(ClickRecognizerRef recognizer, void* context) {
       update();
       start_aeropress_timer();
       break;
-    case STEEP: case PRESS:
+    case STEEP: case PRESS: case WAIT:
       break;
     case DONE:
       state = SET_STEEP;
@@ -269,13 +278,24 @@ void handle_timer(void* data) {
     if (steep_interval == 0) {
       ++state;
       vibes_short_pulse();
+      
+      timer = app_timer_register(wait_increment*1000, handle_timer, NULL);
+    } else {
+      timer = app_timer_register(steep_increment*1000, handle_timer, NULL);
+    }
+  } else if (state == WAIT) {
+    --wait_interval;
+    
+    if (wait_interval == 0) {
+      ++state;
+      vibes_short_pulse();
 
       animation_set_duration((Animation*)prop_animation, press_interval*press_increment*1000);
       animation_schedule((Animation*)prop_animation);
-      
-      timer = app_timer_register(press_increment*1000, handle_timer, NULL);
+
+      timer = app_timer_register(press_increment*1000, handle_timer, NULL);      
     } else {
-      timer = app_timer_register(steep_increment*1000, handle_timer, NULL);
+      timer = app_timer_register(wait_increment*1000, handle_timer, NULL);      
     }
   } else if (state == PRESS) {
     --press_interval;
