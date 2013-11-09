@@ -1,0 +1,26 @@
+{
+  "uuid": "530d98ce-478d-4d17-a86f-c6a25a54b9bc",
+  "shortName": "baWrista",
+  "longName": "baWrista",
+  "companyName": "Overpunch",
+  "versionCode": 1,
+  "versionLabel": "1.0.0",
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {},
+  "resources": {
+    "media": [
+      {
+        "type": "png",
+        "name": "IMAGE_PLUNGER",
+        "file": "images/plungerno4.png"
+      },
+      {
+        "type": "png-trans",
+        "name": "IMAGE_BASE",
+        "file": "images/base3.png"
+      }
+    ]
+  }
+}
