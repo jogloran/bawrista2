@@ -288,7 +288,6 @@ void handle_timer(void* data) {
     
     if (wait_interval == 0) {
       ++state;
-      vibes_short_pulse();
 
       animation_set_duration((Animation*)prop_animation, press_interval*press_increment*1000);
       animation_schedule((Animation*)prop_animation);
