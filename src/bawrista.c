@@ -1,6 +1,8 @@
 #include <pebble.h>
 #include <stdlib.h>
 
+#include "httpcapture.h"
+
 #define TIMER_COOKIE 24601
 #define GRECT_OFFSET(r, dx, dy) GRect((r).origin.x+(dx), (r).origin.y+(dy), (r).size.w, (r).size.h)
 #define BASE_BITMAP_REST_POSITION (GRect(22, 0, 100, 141))
@@ -310,6 +312,23 @@ void handle_timer(void* data) {
   update();
 }
 
+#define HTTP_FRAMEBUFFER_SLICE 0xFFF9
+
+static void app_received(DictionaryIterator *received, void *context) {
+  // Capture screen
+  Tuple* tuple = dict_find(received, HTTP_FRAMEBUFFER_SLICE);
+  if (tuple) {
+    http_capture_send(0);
+    return;
+  }
+}
+static void app_dropped(AppMessageResult reason, void *context) {
+}
+static void app_send_failed(DictionaryIterator *failed, AppMessageResult reason, void *context) {
+}
+
+void http_capture_out_sent(DictionaryIterator *sent, void *context);
+
 void handle_init() {
   state = SET_STEEP;
 
@@ -369,6 +388,16 @@ void handle_init() {
   animation_set_handlers((Animation*)prop_animation, animation_handlers, NULL);
   
   window_set_click_config_provider(window, (ClickConfigProvider) click_config_provider);
+
+app_message_open(124, 256);
+    
+  http_capture_set_window(window);
+  
+    app_message_register_inbox_received(app_received);
+    app_message_register_inbox_dropped(app_dropped);
+    app_message_register_outbox_failed(app_send_failed);
+    app_message_register_outbox_sent(http_capture_out_sent);
+
 }
 
 void handle_deinit() {
@@ -387,6 +416,8 @@ void handle_deinit() {
   app_timer_cancel(timer);
 
   window_destroy(window);
+
+  http_capture_deinit();
 }
 
 int main(void) {
